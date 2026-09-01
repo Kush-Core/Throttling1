@@ -88,10 +88,9 @@ verify.py  ──generates──►  data.bin  (400 MB, 100M x float32, all 1.0)
                                       writes contention_results.txt)
 ```
 
-The critical design decision (documented in
-[plan-the-below-increment-cheerful-shannon.md](plan-the-below-increment-cheerful-shannon.md)) is
-that **repetition lives inside `main.cpp`, not in the shell scripts.** Early versions of this
-project relaunched the binary 3–5 times per config and took the median externally
+The critical design decision is that **repetition lives inside `main.cpp`, not in the shell
+scripts.** Early versions of this project relaunched the binary 3–5 times per config and took the
+median externally
 ([final_results.txt](final_results.txt), [measure.txt](measure.txt) are relics of that). That's
 wrong for this workload specifically: setup cost (reading 400 MB off disk, allocating a 400M-float
 vector) is comparable to or larger than the ~94 ms kernel itself, so relaunching pays that cost N
@@ -163,8 +162,6 @@ you ever change `N` or the generation logic in `verify.py`, update the expected 
 | [data.bin](data.bin) | Generated binary input, ~400 MB. Not source — regenerate with `verify.py` rather than editing. Not meant to be committed/tracked as a normal source artifact. |
 | [contention_results.txt](contention_results.txt) | Output of the current `contend.sh` protocol (in-process trials). This is the file to read for the mean-vs-median-under-contention results. |
 | [final_results.txt](final_results.txt), [measure.txt](measure.txt) | Recorded outputs from the *old* 5-relaunch-per-process protocol (superseded by the in-process trial harness). Kept only as historical record of why that protocol was replaced — not interpretable against, or comparable with, current numbers. |
-| [plan-the-below-increment-cheerful-shannon.md](plan-the-below-increment-cheerful-shannon.md) | Design document for the current harness: why repetition had to move into `main.cpp`, why the compiler-barrier trick is necessary, the quantile convention used for IQR, the contention-sweep rationale, and the falsifiable predictions the sweep was designed to test. Read this for the reasoning behind every non-obvious choice in the code. |
-| [CLAUDE.md](CLAUDE.md) | Instructions for Claude Code / AI assistants working in this repo — commands, architecture summary, and repo-specific conventions to preserve (e.g. keeping `data.bin`'s assumed contents in sync with `main.cpp`'s validation constants). |
 
 ## 7. Command reference
 
