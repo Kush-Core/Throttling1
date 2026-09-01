@@ -1,0 +1,30 @@
+
+=== -O0 ===
+-O0                    level=0  STATS: min=345.05 mean=346.80 median=346.18 iqr=0.76
+-O0                    level=1  STATS: min=356.81 mean=358.13 median=357.58 iqr=1.20
+-O0                    level=4  STATS: min=380.69 mean=405.13 median=398.28 iqr=16.38
+-O0                    level=8  STATS: min=487.86 mean=531.34 median=532.17 iqr=41.69
+-O0 (drift control)    level=0  STATS: min=345.86 mean=351.71 median=348.02 iqr=6.08
+
+=== -O2 ===
+-O2                    level=0  STATS: min=94.32 mean=95.01 median=94.73 iqr=0.65
+-O2                    level=1  STATS: min=97.14 mean=97.80 median=97.46 iqr=0.43
+-O2                    level=4  STATS: min=101.72 mean=111.54 median=110.51 iqr=11.55
+-O2                    level=8  STATS: min=129.20 mean=167.09 median=161.55 iqr=13.24
+-O2 (drift control)    level=0  STATS: min=94.02 mean=94.52 median=94.40 iqr=0.16
+
+=== -O3 ===
+-O3                    level=0  STATS: min=94.11 mean=94.54 median=94.40 iqr=0.37
+-O3                    level=1  STATS: min=97.20 mean=98.54 median=97.50 iqr=0.27
+-O3                    level=4  STATS: min=101.04 mean=107.99 median=107.42 iqr=4.62
+-O3                    level=8  STATS: min=118.19 mean=144.88 median=142.76 iqr=8.03
+-O3 (drift control)    level=0  STATS: min=94.14 mean=94.47 median=94.47 iqr=0.24
+
+=== -O3 -march=native ===
+-O3 -march=native      level=0  STATS: min=94.15 mean=95.88 median=94.60 iqr=0.44
+-O3 -march=native      level=1  STATS: min=97.25 mean=98.20 median=97.74 iqr=0.80
+-O3 -march=native      level=4  STATS: min=102.94 mean=109.22 median=108.42 iqr=3.80
+-O3 -march=native      level=8  STATS: min=127.59 mean=144.02 median=141.95 iqr=8.72
+-O3 -march=native (drift control) level=0  STATS: min=94.08 mean=94.67 median=94.47 iqr=0.30
+
+Contention sweep complete. Results in contention_results.txt

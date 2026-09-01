@@ -1,0 +1,52 @@
+=== -O0 ===
+Sum: 1e+08
+Elapsed time: 353.907 ms
+Sum: 1e+08
+Elapsed time: 348.802 ms
+Sum: 1e+08
+Elapsed time: 344.954 ms
+Sum: 1e+08
+Elapsed time: 345.027 ms
+Sum: 1e+08
+Elapsed time: 344.489 ms
+Median: 345.027 ms
+
+=== -O2 ===
+Sum: 1e+08
+Elapsed time: 93.8837 ms
+Sum: 1e+08
+Elapsed time: 94.9306 ms
+Sum: 1e+08
+Elapsed time: 96.8709 ms
+Sum: 1e+08
+Elapsed time: 102.142 ms
+Sum: 1e+08
+Elapsed time: 95.5755 ms
+Median: 95.5755 ms
+
+=== -O3 ===
+Sum: 1e+08
+Elapsed time: 94.5416 ms
+Sum: 1e+08
+Elapsed time: 94.2272 ms
+Sum: 1e+08
+Elapsed time: 94.3342 ms
+Sum: 1e+08
+Elapsed time: 94.4398 ms
+Sum: 1e+08
+Elapsed time: 94.1573 ms
+Median: 94.3342 ms
+
+=== -O3 -march=native ===
+Sum: 1e+08
+Elapsed time: 107.167 ms
+Sum: 1e+08
+Elapsed time: 96.3087 ms
+Sum: 1e+08
+Elapsed time: 95.5055 ms
+Sum: 1e+08
+Elapsed time: 95.8729 ms
+Sum: 1e+08
+Elapsed time: 94.3106 ms
+Median: 95.8729 ms
+
