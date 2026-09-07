@@ -22,7 +22,9 @@ a ~3.6x difference from flags alone, no source code change). It also demonstrate
 misconception directly: on Apple Silicon, `-march=native` compiles to **byte-identical assembly**
 as plain `-O3` (verified with `diff` on the saved `.s` files), because arm64/M1 is already clang's
 default target here. The flag isn't wrong to try — it's just a no-op on this hardware, and the repo
-proves that rather than asserting it.
+proves that rather than asserting it: [main_O3.s](main_O3.s) and [main_native.s](main_native.s) are
+committed, so `diff main_O3.s main_native.s` reproduces the result without needing an M1 to compile
+on.
 
 **Experiment B — scheduler contention ([contend.sh](contend.sh)).**
 Takes the same four builds and re-runs each one at four levels of artificial CPU contention (0, 1,
@@ -32,7 +34,41 @@ keep conceptually: it shows **mean and median diverging** as contention increase
 cores @ ~2.06 GHz), so a trial that gets displaced onto an E-core doesn't get a little slower, it
 jumps by roughly **1.55x** in one step. The result isn't a smooth slowdown curve, it's a bimodal
 distribution — a fast cluster and a slow cluster — and that shape is only visible if you report
-more than a single mean.
+more than a single mean. The spread makes it concrete: for `-O3`, IQR goes from **0.37 ms**
+uncontended to **8.03 ms** at level 8, while the *minimum* only moves 94 ms → 118 ms. The fast
+cluster never disappears; it just stops being the majority, which is exactly the condition that
+breaks a median.
+
+**What the 3.6x actually buys — read the assembly, not the flag.**
+The obvious story is that `-O3` vectorized the summation. It did not. In [main_O3.s](main_O3.s),
+clang unrolls the loop 16x and vectorizes the *loads* and the `float`→`double` conversions
+(`ldp q1, q2` / `fcvtl`), then emits sixteen **serial** `fadd d0, d0, dN` instructions into a
+single accumulator. IEEE-754 forbids reassociating a floating-point sum, so without `-ffast-math`
+the compiler is not permitted to split that accumulator and add in parallel — the arithmetic stays
+one dependency chain at every optimization level.
+
+That makes the kernel **latency-bound, not bandwidth-bound**, and the runtime is predictable from
+first principles rather than merely measured: 100M dependent adds x ~3-cycle `fadd` latency /
+3.2 GHz = **93.75 ms** predicted, against **94.11 ms** measured — agreement within 0.4%. DRAM is
+nowhere near the limiter (400 MB in 94 ms is ~4.3 GB/s, a small fraction of what M1 will do), which
+is the reason the warmup comment in `main.cpp` is careful to say the warmup exists for DVFS ramp
+and *not* for cache warmth.
+
+So the 3.6x from `-O0` to `-O3` is not faster math — it is the removal of `-O0`'s per-iteration
+register spills and reloads around an arithmetic chain whose cost never changed. The practical
+consequence is that no higher `-O` number can reach this: the only way to actually speed the loop
+up is to break the dependency chain, via multiple accumulators in the source or `-ffast-math` to
+authorize the compiler to do it. Reading the generated assembly is what separates those two
+explanations; the wall-clock number alone cannot. The loop body is committed, so this is checkable
+directly:
+
+```bash
+# the sixteen serial fadds, straight out of the tracked assembly
+awk '/_ZL6kernelPKfm:/,/ret/' main_O3.s | grep -c 'fadd'
+
+# and the -march=native no-op, in one line
+diff main_O3.s main_native.s && echo "identical"
+```
 
 ## 3. Why this matters (the actual lesson)
 
@@ -152,14 +188,18 @@ you ever change `N` or the generation logic in `verify.py`, update the expected 
 
 ## 6. File-by-file reference
 
+`.gitignore` excludes only `data.bin` and the compiled `main` binary — a fresh clone will not have
+them, and section 5 regenerates both. The `.s` files *are* tracked: they are the evidence for the
+codegen claims above, not just build output.
+
 | File | Purpose |
 |---|---|
 | [main.cpp](main.cpp) | The entire program under test. Loads `data.bin`, runs `kernel()` (the naive `sum += data[i]` loop) through 3 untimed warmup passes and 30 (default) timed trials guarded by compiler memory barriers, validates each trial's result, then computes and prints min/mean/median/IQR plus two machine-parseable lines (`SAMPLES:`, `STATS:`). Accepts `./main [trials] [warmup]`. |
 | [benchmark.sh](benchmark.sh) | Drives Experiment A. Recompiles `main.cpp` under each of 4 flag sets, runs the resulting binary once, and prints the parsed `STATS:` line as one row — a compact side-by-side comparison of optimization levels. |
 | [contend.sh](contend.sh) | Drives Experiment B. For each of the 4 flag sets, compiles once, then runs 33-trial cells at contention levels 0/1/4/8 (using bare `bash -c 'while :; do :; done'` busy-loop processes to occupy CPU cores, since macOS has no usable core-pinning API on Apple Silicon), with a 5s cooldown between contended cells and a trailing level-0 "drift control" re-measurement per flag set to detect thermal confounding. Guarantees spinner cleanup via `trap ... EXIT INT TERM`. Writes `contention_results.txt`. |
 | [verify.py](verify.py) | Generates `data.bin`: `N = 100,000,000` `float32` values, all `1.0`, via NumPy, written raw with `.tofile()`. Also prints NumPy's own computed sum as an independent reference value to sanity-check `main.cpp`'s result against. |
-| [main_O0.s](main_O0.s), [main_O3.s](main_O3.s), [main_native.s](main_native.s) | Saved `clang++ -S` assembly output for the loop at each optimization level, kept for inspecting how (or whether) the compiler vectorizes the summation. `main_O3.s` and `main_native.s` are byte-identical on this machine — direct proof that `-march=native` is a no-op here, since M1/arm64 is already clang's default target. |
-| [data.bin](data.bin) | Generated binary input, ~400 MB. Not source — regenerate with `verify.py` rather than editing. Not meant to be committed/tracked as a normal source artifact. |
+| [main_O0.s](main_O0.s), [main_O3.s](main_O3.s), [main_native.s](main_native.s) | Saved `clang++ -S` assembly output for the loop at each optimization level, kept for inspecting how (or whether) the compiler vectorizes the summation. `main_O3.s` and `main_native.s` are byte-identical on this machine — direct proof that `-march=native` is a no-op here, since M1/arm64 is already clang's default target. These are committed on purpose, as the primary evidence for both assembly-level claims in section 2: the reader can `diff` them and count the serial `fadd`s without owning the hardware. Regenerate rather than hand-edit (see section 5). |
+| `data.bin` *(generated, not tracked)* | Generated binary input, ~400 MB. Not source — regenerate with `verify.py` rather than editing. Not meant to be committed/tracked as a normal source artifact. |
 | [contention_results.txt](contention_results.txt) | Output of the current `contend.sh` protocol (in-process trials). This is the file to read for the mean-vs-median-under-contention results. |
 | [final_results.txt](final_results.txt), [measure.txt](measure.txt) | Recorded outputs from the *old* 5-relaunch-per-process protocol (superseded by the in-process trial harness). Kept only as historical record of why that protocol was replaced — not interpretable against, or comparable with, current numbers. |
 
