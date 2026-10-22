@@ -1,0 +1,13 @@
+
+=== -O3, 4P + 4E cores ===
+-O3                    threads=1  STATS: min=94.44 mean=95.77 median=95.12 iqr=0.65  spread=1.00 overhead_ms=0.072
+-O3                    threads=2  STATS: min=48.82 mean=49.29 median=49.02 iqr=0.52  spread=1.00 overhead_ms=0.066
+-O3                    threads=3  STATS: min=33.87 mean=34.02 median=33.97 iqr=0.06  spread=1.01 overhead_ms=0.067
+-O3                    threads=4  STATS: min=25.55 mean=26.73 median=25.97 iqr=0.48  spread=1.02 overhead_ms=0.074
+-O3                    threads=5  STATS: min=24.05 mean=28.66 median=26.75 iqr=3.29  spread=1.08 overhead_ms=0.074
+-O3                    threads=6  STATS: min=20.10 mean=21.61 median=21.40 iqr=1.50  spread=1.23 overhead_ms=0.083
+-O3                    threads=7  STATS: min=18.35 mean=20.10 median=19.67 iqr=1.43  spread=1.30 overhead_ms=0.078
+-O3                    threads=8  STATS: min=16.84 mean=18.89 median=18.63 iqr=1.28  spread=1.39 overhead_ms=0.081
+-O3 (drift control)    threads=1  STATS: min=94.41 mean=95.47 median=94.96 iqr=0.78  spread=1.00 overhead_ms=0.070
+
+Thread sweep complete. Results in threads_results.txt
