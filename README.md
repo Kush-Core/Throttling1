@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/header-dark.svg">
+  <img width="100%" alt="Throttling1 — How compiler flags, scheduler contention and threads change a 100M-float sum" src="assets/header-light.svg">
+</picture>
+
 # Throttling1 — Optimization-Flag & Scheduler-Contention Microbenchmark
 
 ## 1. Goal of this project
